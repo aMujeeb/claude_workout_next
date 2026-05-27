@@ -12,6 +12,7 @@
 | Styling | **Tailwind CSS v4** (`@tailwindcss/postcss`) + `globals.css` |
 | PostCSS | `postcss.config.mjs` — `@tailwindcss/postcss` plugin |
 | Fonts | Geist Sans & Geist Mono via `next/font/google` |
+| Auth | **Clerk** (`@clerk/nextjs`) — email only |
 | Linting | ESLint 9 + `eslint-config-next` |
 | Node types | `@types/node ^20` |
 
@@ -19,15 +20,24 @@
 
 ```
 src/
+  proxy.ts            # Clerk auth proxy (Next.js 16's renamed middleware)
   app/
-    layout.tsx        # Root layout — sets fonts, html/body
-    page.tsx          # Home route (/)
-    globals.css       # Global CSS tokens (light/dark theme vars)
-    page.module.css   # CSS Module for home page
-public/               # Static assets (SVGs)
-next.config.ts        # Next.js config (currently empty)
-tsconfig.json         # TypeScript config
-eslint.config.mjs     # ESLint flat config
+    _components/
+      AuthNav.tsx       # Sign-in / Sign-up / UserButton nav (Client Component)
+    sign-in/
+      [[...sign-in]]/
+        page.tsx        # Clerk hosted sign-in UI (/sign-in)
+    sign-up/
+      [[...sign-up]]/
+        page.tsx        # Clerk hosted sign-up UI (/sign-up)
+    layout.tsx          # Root layout — ClerkProvider + AuthNav + fonts
+    page.tsx            # Home route (/)
+    globals.css         # Global CSS tokens (light/dark theme vars)
+    page.module.css     # CSS Module for home page
+public/                 # Static assets (SVGs)
+next.config.ts          # Next.js config
+tsconfig.json           # TypeScript config
+eslint.config.mjs       # ESLint flat config
 ```
 
 ## Next.js 16 — Critical Conventions
@@ -83,6 +93,73 @@ export default function Layout(props: LayoutProps<'/dashboard'>) {
 - Fetch in Server Components directly (no `useEffect`)
 - Pass data down to Client Components as serialisable props
 - `searchParams` prop opts a page into **dynamic rendering** — avoid if not needed
+
+## Authentication (Clerk)
+
+> Email-only. Social logins and phone numbers are disabled in the Clerk dashboard.
+
+### How it works
+
+- `src/proxy.ts` — Next.js 16's renamed middleware (was `middleware.ts`). Runs `clerkMiddleware` to protect all routes except `/sign-in` and `/sign-up`.
+- `ClerkProvider` wraps children inside `<body>` in `layout.tsx` — **not** around `<html>`.
+- `AuthNav.tsx` is a `'use client'` component that renders sign-in/sign-up buttons when signed out, and `<UserButton>` when signed in.
+
+### Public vs protected routes
+
+```ts
+// src/proxy.ts
+const isPublicRoute = createRouteMatcher(["/sign-in(.*)", "/sign-up(.*)"])
+// All other routes require authentication via auth.protect()
+```
+
+To make additional routes public, add them to the `createRouteMatcher` array.
+
+### Server-side auth
+
+```tsx
+// In any Server Component or Route Handler
+import { auth } from '@clerk/nextjs/server'
+
+export default async function Page() {
+  const { isAuthenticated, userId } = await auth()  // MUST await!
+  if (!isAuthenticated) return <p>Not signed in</p>
+  return <p>Hello {userId}</p>
+}
+```
+
+### Client-side auth
+
+```tsx
+'use client'
+import { Show } from '@clerk/nextjs'
+
+// Conditionally render based on auth state
+<Show when="signed-in"><Dashboard /></Show>
+<Show when="signed-out"><SignInButton /></Show>
+```
+
+### Auth components (from `@clerk/nextjs`)
+
+| Component | Purpose |
+|---|---|
+| `<ClerkProvider>` | Required root provider — inside `<body>` |
+| `<Show when="signed-in">` | Renders children only when authenticated |
+| `<Show when="signed-out">` | Renders children only when unauthenticated |
+| `<SignInButton mode="modal">` | Opens sign-in flow |
+| `<SignUpButton mode="modal">` | Opens sign-up flow |
+| `<UserButton>` | Avatar + session menu for signed-in users |
+| `<SignIn>` | Full-page sign-in component (used at `/sign-in`) |
+| `<SignUp>` | Full-page sign-up component (used at `/sign-up`) |
+
+### ❌ Patterns to avoid
+
+```ts
+// Don't use middleware.ts — renamed to proxy.ts in Next.js 16
+// Don't call auth() without await — it's async in Next.js 15+
+// Don't import ClerkProvider from @clerk/clerk-react — use @clerk/nextjs
+// Don't wrap <html> with ClerkProvider — wrap children inside <body> only
+// Don't expose CLERK_SECRET_KEY in client code or NEXT_PUBLIC_ vars
+```
 
 ## CSS Conventions (Tailwind v4)
 
@@ -140,3 +217,12 @@ npm run lint     # Run ESLint
 
 - Only vars prefixed `NEXT_PUBLIC_` are included in the client bundle
 - All other `process.env.*` vars are server-only and replaced with `""` on the client
+
+### Required Clerk variables (in `.env.local`)
+
+| Variable | Exposure | Purpose |
+|---|---|---|
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Client + Server | Identifies your Clerk app |
+| `CLERK_SECRET_KEY` | Server only | Signs requests to Clerk API — **never expose** |
+| `NEXT_PUBLIC_CLERK_SIGN_IN_URL` | Client + Server | Path to sign-in page (`/sign-in`) |
+| `NEXT_PUBLIC_CLERK_SIGN_UP_URL` | Client + Server | Path to sign-up page (`/sign-up`) |

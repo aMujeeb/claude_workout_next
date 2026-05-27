@@ -1,36 +1,74 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ClaudeWokout Next
 
-## Getting Started
+A high-performance Next.js application built with cutting-edge tools and optimized modern conventions.
 
-First, run the development server:
+---
+
+> [!NOTE]
+> This project is designed, built, and maintained autonomously using the **Antigravity IDE** — a state-of-the-art agentic AI development environment engineered by the Google DeepMind team.
+
+---
+
+## 🛠️ Technology Stack
+
+This application is built with a highly cohesive, modern technology stack:
+
+*   **Core Framework**: [Next.js 16.2.6](https://nextjs.org/) (App Router)
+*   **Library**: [React 19.2.4](https://react.dev/) (utilizing modern React features, Server Components by default, and asynchronous API integrations)
+*   **Language**: [TypeScript 5](https://www.typescriptlang.org/) for robust static typing and advanced type safety
+*   **Styling**: [Tailwind CSS v4](https://tailwindcss.com/) configured via `@tailwindcss/postcss` for seamless utility-first styling without legacy `tailwind.config.js` bloat
+*   **Fonts**: Geist Sans & Geist Mono integrated smoothly via `next/font/google`
+*   **Tooling & Linting**: ESLint 9 with `eslint-config-next`
+
+---
+
+## 🚀 Getting Started
+
+### 1. Installation
+
+Install dependencies using `npm`:
+
+```bash
+npm install
+```
+
+### 2. Development
+
+Start the development server with Turbopack fast refreshing:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser to view the application.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 3. Production Build
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Verify TypeScript compilation, compile the optimized production bundle, and statically optimize components:
 
-## Learn More
+```bash
+npm run build
+```
 
-To learn more about Next.js, take a look at the following resources:
+To run the production build locally:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm run start
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 4. Linting
 
-## Deploy on Vercel
+Run ESLint to verify codebase consistency and syntax rules:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+npm run lint
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+## 📐 Architecture & Key Conventions
+
+*   **Asynchronous Route Props**: In Next.js 16, route properties such as `params` and `searchParams` are Promises. They must be awaited (e.g., `const { slug } = await params`).
+*   **Server Components by Default**: All layout and page files inside `src/app` render on the server. Interactive nodes are isolated into client component boundaries using `"use client"`.
+*   **CSS v4 Configurations**: Global variables and design tokens are declared dynamically in `src/app/globals.css` via the native CSS `@theme` rules instead of standard configuration files.
+ 
